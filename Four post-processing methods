@@ -1,0 +1,39 @@
+predict1 is the original segmentation result without post-processing
+predict2 post-processes the original segmentation results (fills in the shortcomings in the middle) and the key code is as follows：
+def fill_hole(img_path):
+    img = cv.imread(img_path,0)
+    result = scipy.ndimage.binary_fill_holes(np.asarray(img).astype(int))
+    result = (result+0)*255
+    return result
+
+predict3 takes the convex hull of the original image, the key code is as follows：
+from skimage import morphology
+from tqdm import tqdm
+path = "/home/yangrui/PycharmProjects/WangZhongyu/data/data3/test20210309/predict02 (copy)"
+files = os.listdir(path)
+for file in tqdm(files):
+    file_path = os.path.join(path,file)
+    img = cv.imread(file_path,0)
+    result = morphology.convex_hull_image(img)
+    result = (result + 0) * 255
+    cv.imwrite(file_path, result)
+
+In the code, if you multiply by 1 or add 0 in some places, you can quickly convert the bool array to an int array
+
+predict4 takes the largest connected domain of the image, the key code：
+def largeConnectComponent(bw_image):
+    labeled_img, num = measure.label(bw_image, background=0, return_num=True)
+   # The labeled_img returned here is an image, no longer a binary image, there are several connected domains, the maximum value is how many, num is the number of connected domains, if 1 connected domain is num=1
+    max_label = 0
+    max_num = 0
+    # The image is all black, there is no connected domain num=0, or a connected domain num=1, directly return to the original image
+    if num == 0 or num == 1:
+        return bw_image
+    else:
+        for i in range(1, num + 1):  # Pay attention to the range here, in order to correspond to the value of the connected domain
+            # Calculate the area, keep the index label corresponding to the largest area, and then return the binarized largest connected domain
+            if np.sum(labeled_img == i) > max_num:
+                max_num = np.sum(labeled_img == i)
+                max_label = i
+        lcc = (labeled_img == max_label)
+        return lcc
