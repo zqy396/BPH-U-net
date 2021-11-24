@@ -6,7 +6,7 @@ from paddlex import transforms as T
 # pdx.utils.download_and_decompress(optic_dataset, path='./')
 
 # Define transforms during training and verification
-# API说明：https://github.com/PaddlePaddle/PaddleX/blob/develop/docs/apis/transforms/transforms.md
+# API explanation：https://github.com/PaddlePaddle/PaddleX/blob/develop/docs/apis/transforms/transforms.md
 train_transforms = T.Compose([
     T.Resize(target_size=512),
     T.RandomHorizontalFlip(),
