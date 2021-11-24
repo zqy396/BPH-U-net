@@ -1,0 +1,84 @@
+import paddlex as pdx
+from paddlex import transforms as T
+
+# Download and decompress the video disk segmentation data set
+# optic_dataset = 'https://bj.bcebos.com/paddlex/datasets/optic_disc_seg.tar.gz'
+# pdx.utils.download_and_decompress(optic_dataset, path='./')
+
+# Define transforms during training and verification
+# API说明：https://github.com/PaddlePaddle/PaddleX/blob/develop/docs/apis/transforms/transforms.md
+train_transforms = T.Compose([
+    T.Resize(target_size=512),
+    T.RandomHorizontalFlip(),
+    T.Normalize(
+        mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+])
+
+eval_transforms = T.Compose([
+    T.Resize(target_size=512),
+    T.Normalize(
+        mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+])
+
+# Define the data set used for training and validation
+# API explanation：https://github.com/PaddlePaddle/PaddleX/blob/develop/docs/apis/datasets.md
+train_dataset = pdx.datasets.SegDataset(
+    data_dir= r'G:\yangrui_p3\data_1',
+    file_list='data_1/train_list.txt',
+    label_list='data_1/labels.txt',
+    transforms=train_transforms,
+    shuffle=True)
+
+eval_dataset = pdx.datasets.SegDataset(
+    data_dir= r'G:\yangrui_p3\data_1',
+    file_list='data_1/val_list.txt',
+    label_list='data_1/labels.txt',
+    transforms=eval_transforms,
+    shuffle=False)
+
+# Initialize the model and train it
+# You can use VisualDL to view the training indicators, refer to https://github.com/PaddlePaddle/PaddleX/blob/develop/docs/train/visualdl.md
+num_classes = len(train_dataset.labels)
+model = pdx.seg.BiSeNetV2(num_classes=num_classes)
+
+# API explanation：https://github.com/PaddlePaddle/PaddleX/blob/develop/docs/apis/models/semantic_segmentation.md
+#Each parameter introduction and adjustment instructions ：https://github.com/PaddlePaddle/PaddleX/blob/develop/docs/parameters.md
+model.train(
+    num_epochs=50,
+    train_dataset=train_dataset,
+    train_batch_size=16,
+    eval_dataset=eval_dataset,
+    learning_rate=0.05,
+    save_dir='output/fuqiangjing',
+    use_vdl=True)
+
+# Validation model
+
+import paddlex as pdx
+import cv2 as cv
+import matplotlib
+matplotlib.use("TKAgg")
+import matplotlib.pyplot as plt
+
+model = pdx.load_model(r"G:\yangrui_p3\output\fuqiangjing\best_model")
+
+img_path = r"G:\yangrui_p3\data_1\image\val_00328.jpg"
+img = cv.imread(img_path,1)
+img = img[:,:,::-1]
+result = model.predict(img_path)
+
+plt.figure(figsize=(8,4))
+plt.suptitle("The result of segmentation")
+
+plt.subplot(121)
+plt.imshow(img)
+plt.title("original")
+
+plt.subplot(122)
+plt.imshow(result["label_map"],cmap="gray")
+plt.title("segmentation")
+plt.savefig("result4.jpg")
+plt.show()
+
+
+
